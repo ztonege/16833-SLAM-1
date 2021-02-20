@@ -22,7 +22,10 @@ def visualize_map(occupancy_map):
     fig = plt.figure()
     mng = plt.get_current_fig_manager()
     plt.ion()
+    plt.scatter(X_bar[:,0]/10.0, X_bar[:,1]/10.0)
+
     plt.imshow(occupancy_map, cmap='Greys')
+    
     plt.axis([0, 800, 0, 800])
 
 
@@ -99,11 +102,15 @@ if __name__ == '__main__':
     num_particles = args.num_particles
     X_bar = init_particles_random(num_particles, occupancy_map)
     # X_bar = init_particles_freespace(num_particles, occupancy_map)
+    
+    
+    
     """
     Monte Carlo Localization Algorithm : Main Loop
     """
-    if args.visualize:
-        visualize_map(occupancy_map)
+   # if args.visualize:
+    
+    
 
     first_time_idx = True
     for time_idx, line in enumerate(logfile):
@@ -148,7 +155,8 @@ if __name__ == '__main__':
             """
             x_t0 = X_bar[m, 0:3]
             x_t1 = motion_model.update(u_t0, u_t1, x_t0)
-
+            
+            X_bar[m, 0:3] = x_t1
             """
             SENSOR MODEL
             """
@@ -159,13 +167,17 @@ if __name__ == '__main__':
             else:
                 X_bar_new[m, :] = np.hstack((x_t1, X_bar[m, 3]))
 
-        X_bar = X_bar_new
+        #X_bar = X_bar_new
+        
         u_t0 = u_t1
 
         """
         RESAMPLING
         """
-        X_bar = resampler.low_variance_sampler(X_bar)
+        #X_bar = resampler.low_variance_sampler(X_bar)
 
-        if args.visualize:
-            visualize_timestep(X_bar, time_idx, args.output)
+        # if args.visualize:
+        # visualize_timestep(X_bar, time_idx, args.output)
+
+    visualize_map(occupancy_map)
+    plt.scatter(X_bar[:,0], X_bar[:,1])
