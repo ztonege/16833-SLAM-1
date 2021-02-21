@@ -7,6 +7,7 @@
 import numpy as np
 import math
 import time
+import random
 from matplotlib import pyplot as plt
 from scipy.stats import norm
 
@@ -23,10 +24,10 @@ class SensorModel:
         TODO : Tune Sensor Model parameters here
         The original numbers are for reference but HAVE TO be tuned.
         """
-        self._z_hit = 1
-        self._z_short = 0.1
-        self._z_max = 0.1
-        self._z_rand = 100
+        self._z_hit = 0.4
+        self._z_short = 0.15
+        self._z_max = 0.3
+        self._z_rand = 0.15
 
         self._sigma_hit = 50
         self._lambda_short = 0.1
@@ -69,12 +70,47 @@ class SensorModel:
         
     
     #https://www.codegrepper.com/code-examples/python/python+bresenham+line+algorithm
+
+    def true_range(self, points):
+              
+        
+        x1, y1 = points[0]
+        
+        for i, point in enumerate(points):
+            x, y = point
+            x = np.int(np.round(x/10))
+            y = np.int(np.round(y/10))
+            # print("x, y", x, y)
+            m = self._map[x, y]
+            # print("m", m)
+            prob = random.choices([0,1], weights = (100*(1-m), 100*m), k = 1)
+            # print("prob", prob)
+            # print(m, prob)
+            
+            if(prob[0] == 1):
+                distance = np.sqrt((x - x1)**2 + (y - y1)**2)
+                break
+            
+            else:
+                distance = self._max_range/10
+            
+        return distance
+        
+           
+    
     def bresenham(self, x1, y1, x2, y2):
+        
+        x1 = np.int(np.round(x1))
+        y1 = np.int(np.round(y1))
+        x2 = np.int(np.round(x2))
+        y2 = np.int(np.round(y2))
         
         dx = x2 - x1
         dy = y2 - y1
         
-        if (abs(dy) > abs(dx)):
+        slopedir = abs(dy) - abs(dx)
+        
+        if (slopedir > 0):
             x1, y1 = y1, x1
             x2, y2 = y2, x2
             
@@ -91,44 +127,32 @@ class SensorModel:
         ystep = 1 if y1 < y2 else -1
         
         y = y1
-        pointsx = []
-        pointsy = []
+        # pointsx = []
+        points = []
         
         for x in range(x1, x2 + 1):
             
-            if (abs(dy) > abs(dx)):
-                coordx = y
-                coordy = x
+            if (slopedir > 0):
+                coord = (y,x)
+                # coord = x
                 
             else:
-                coordx = x
-                coordy = y
+                coord = (x,y)
+                # coordy = y
                 
-            pointsx.append(coordx)
-            pointsy.append(coordy)
-            
-            m = self._map[coordx, coordy]
-            
-            prob = np.random.choices([0,1], weights = (100*(1-m), 100*m), k = 1)
-            
-            if(prob == 1):
-                distance = np.sqrt((coordx - x1)**2 + (coordy - y1)**2)
-                return distance
-                break
-            else:
-                continue
-            
-                
+            points.append(coord)
+            # pointsy.append(coordy)
+  
             error -= abs(dy)
             if error < 0:
                 y += ystep
                 error += dx
                 
-            if swapped:
-                pointsx.reverse()
-                pointsy.reverse()
+        if swapped:
+            points.reverse()
+            # pointsy.reverse()
                 
-        return self._max_range/10
+        return points
     
     
     def endpoint(self, x1, y1, theta1, k):
@@ -158,12 +182,14 @@ class SensorModel:
         zrand = self._z_rand
         
         for k in range(1, K+1):
-            z_t = z_t1_arr[k]
+            z_t = z_t1_arr[k-1]
             x1, y1, theta1 =  x_t1[0], x_t1[1], x_t1[2]
             x2, y2 = self.endpoint(x1, y1, theta1, k)
-            z_star = self.bresenham(x1, y1, x2, y2)
             
-            phit = self.phit(z_star)
+            points = self.bresenham(x1, y1, x2, y2)
+            z_star = self.true_range(points)
+            
+            phit = self.p_hit(z_star)
             pshort = self.p_short(z_star, z_t)
             pmax = self.p_max(z_t)
             prand = self.p_rand(z_t)
@@ -174,6 +200,20 @@ class SensorModel:
                 
         prob_zt1 = q
         return prob_zt1
+    
+    
+if __name__ == "__main__":
+        
+    path_map ='../data/map/wean.dat'
+    map_obj = MapReader(path_map)
+    occupancy_map = map_obj.get_map()
+        
+    sensor = SensorModel(occupancy_map)
+        
+    # points = sensor.bresenham(200,500, 100, 600)
+    # distance = sensor.true_range(points)
+    # print(points)
+    # print(distance)
 
 
 

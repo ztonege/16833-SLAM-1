@@ -22,7 +22,7 @@ Entry Type #1 (odometry):
 
 O x y theta ts
 
-x y theta - coordinates of the robot in standard odometry frame
+x y todoeta - coordinates of the robot in standard odometry frame
 ts - timestamp of odometry reading (0 at start of run)
 
 Entry Type #2 (laser)

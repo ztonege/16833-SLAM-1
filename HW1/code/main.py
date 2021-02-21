@@ -167,17 +167,17 @@ if __name__ == '__main__':
             else:
                 X_bar_new[m, :] = np.hstack((x_t1, X_bar[m, 3]))
 
-        #X_bar = X_bar_new
+        X_bar = X_bar_new
         
         u_t0 = u_t1
 
         """
         RESAMPLING
         """
-        #X_bar = resampler.low_variance_sampler(X_bar)
+        X_bar = resampler.low_variance_sampler(X_bar)
 
         # if args.visualize:
-        # visualize_timestep(X_bar, time_idx, args.output)
+        visualize_timestep(X_bar, time_idx, args.output)
 
     visualize_map(occupancy_map)
     plt.scatter(X_bar[:,0], X_bar[:,1])

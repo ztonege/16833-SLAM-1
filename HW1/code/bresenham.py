@@ -21,7 +21,9 @@ def bresenham(x1, y1, x2, y2, map_coord):
         dx = x2 - x1
         dy = y2 - y1
         
-        if (abs(dy) > abs(dx)):
+        slopedir = abs(dy) - abs(dx)
+        
+        if (slopedir > 0):
             x1, y1 = y1, x1
             x2, y2 = y2, x2
             
@@ -43,7 +45,7 @@ def bresenham(x1, y1, x2, y2, map_coord):
         
         for x in range(x1, x2 + 1):
             
-            if (abs(dy) > abs(dx)):
+            if (slopedir > 0):
                 coordx = y
                 coordy = x
                 
@@ -54,30 +56,31 @@ def bresenham(x1, y1, x2, y2, map_coord):
             pointsx.append(coordx)
             pointsy.append(coordy)
             
-            ############################
-            # m = map_coord[coordy, coordx]
+            ###########################
+            m = map_coord[coordy, coordx]
             
-            # prob = random.choices([0,1], weights = (100*(1-m), 100*m), k = 1)
+            prob = random.choices([0,1], weights = (100*(1-m), 100*m), k = 1)
             # print(m, prob)
             
-            # if(prob == 1):
-            #     distance = np.sqrt((coordx - x1)**2 + (coordy - y1)**2)
-            #     return distance
-            #     break
-            # else:
-            #     continue
-            # ############################
+            if(prob == 1):
+                distance = np.sqrt((coordx - x1)**2 + (coordy - y1)**2)
+                return distance
+                break
+            else:
+                continue
+            ############################
                 
             error -= abs(dy)
             if error < 0:
                 y += ystep
                 error += dx
                 
-            if swapped:
-                pointsx.reverse()
-                pointsy.reverse()
+        if swapped:
+            pointsx.reverse()
+            pointsy.reverse()
                 
         return pointsx, pointsy
+
 
 map_coord = np.array([[0.9, 0.1, 0.9, 0.4, 1],
              [0.6, 0.1, 0.9, 0.4, 1],
