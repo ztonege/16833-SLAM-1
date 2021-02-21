@@ -21,3 +21,6 @@ Main
  - Visualize points/ timestep
  - Decrease point size for visualization
  - Check Odometry reading of Robot (Choose L or both L and O)
+
+
+- Write Report
