@@ -179,5 +179,5 @@ if __name__ == '__main__':
         # if args.visualize:
         visualize_timestep(X_bar, time_idx, args.output)
 
-    visualize_map(occupancy_map)
+        visualize_map(occupancy_map)
     plt.scatter(X_bar[:,0], X_bar[:,1])
