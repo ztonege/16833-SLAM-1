@@ -24,10 +24,10 @@ class SensorModel:
         TODO : Tune Sensor Model parameters here
         The original numbers are for reference but HAVE TO be tuned.
         """
-        self._z_hit = 100
-        self._z_short = 50
-        self._z_max = 1
-        self._z_rand = 5
+        self._z_hit = 20 #100
+        self._z_short = 6 #30
+        self._z_max = 0.1 #0.5
+        self._z_rand = 1 #5
 
         self._sigma_hit = 50 #50
         self._lambda_short = 0.01 #0.1
