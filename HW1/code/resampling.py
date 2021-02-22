@@ -103,7 +103,7 @@ class Resampling:
 if __name__ == "__main__":
     pass
 
-    sampler = Resampling()
+    # sampler = Resampling()
     
     # X_bar = (np.arange(40)).reshape(10,4)
     # X_bar[9:10, 3] = 500

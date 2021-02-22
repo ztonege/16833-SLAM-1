@@ -24,15 +24,15 @@ class SensorModel:
         TODO : Tune Sensor Model parameters here
         The original numbers are for reference but HAVE TO be tuned.
         """
-        self._z_hit = 0.4
-        self._z_short = 0.15
-        self._z_max = 0.3
-        self._z_rand = 0.15
+        self._z_hit = 100
+        self._z_short = 50
+        self._z_max = 1
+        self._z_rand = 5
 
-        self._sigma_hit = 50
-        self._lambda_short = 0.1
+        self._sigma_hit = 50 #50
+        self._lambda_short = 0.01 #0.1
 
-        self._max_range = 1000
+        self._max_range = 1000 #1000
         self._min_probability = 0.35
         self._subsampling = 2
 
@@ -44,7 +44,9 @@ class SensorModel:
     def p_hit(self, z_star, z_t):
         
         if(0 <= z_t <= self._max_range):
-            return np.random.normal(z_star, self._sigma_hit)
+            normal = (1/np.sqrt(2*np.pi*(self._sigma_hit)**2))*np.exp(-0.5*(z_t - z_star)**2/(self._sigma_hit)**2)
+            # return np.random.normal(z_star, self._sigma_hit)
+            return normal
         else:
             return 0
         
@@ -81,12 +83,17 @@ class SensorModel:
               
         
         x1, y1 = points[0]
-        for i in range(1,len(points) + 1):
+        for i in range(1,len(points)):
         # for i, point in enumerate(points):
             x, y = points[i]
             # x = np.int(np.round(x/10.0))
             # y = np.int(np.round(y/10.0))
             # print("x, y", x, y)
+            
+            if(x >= 800 or y >= 800):
+                x = 799
+                y = 799
+                
             m = self._map[x, y]
             # print("m", m)
             prob = random.choices([0,1], weights = (100*(1-m), 100*m), k = 1)
@@ -111,6 +118,11 @@ class SensorModel:
         y1 = np.int(np.round(y1))
         x2 = np.int(np.round(x2))
         y2 = np.int(np.round(y2))
+        
+        # x1 = np.int(x1)
+        # y1 = np.int(y1)
+        # x2 = np.int(x2)
+        # y2 = np.int(y2)
         
         dx = x2 - x1
         dy = y2 - y1
@@ -181,7 +193,7 @@ class SensorModel:
         TODO : Add your code here
         """
         
-        q = 1
+        q = 0
         K = z_t1_arr.size
         
         x_t1_L = x_t1[0] + 25.0*np.cos(x_t1[2])
@@ -215,29 +227,46 @@ class SensorModel:
             
             
             p = zhit*phit + zshort*pshort + zmax*pmax + zrand*prand
-            
-            q = q*p
+            if(p > 0):
+                q = q + np.log(p)
                 
         # prob_zt1 = q
-        return q
+        return np.exp(q)
     
     
 if __name__ == "__main__":
     
-    pass
-    # path_map ='../data/map/wean.dat'
-    # map_obj = MapReader(path_map)
-    # occupancy_map = map_obj.get_map()
+    
+    path_map ='../data/map/wean.dat'
+    map_obj = MapReader(path_map)
+    occupancy_map = map_obj.get_map()
         
-    # sensor = SensorModel(occupancy_map)
+    sensor = SensorModel(occupancy_map)
         
     # points = sensor.bresenham(200,500, 100, 600)
     # distance = sensor.true_range(points)
     # print(points)
     # print(distance)
+    z_star = 500
+    z_t = np.arange(1000)
+    p_t = []
+    zhit = sensor._z_hit
+    zshort = sensor._z_short
+    zmax = sensor._z_max
+    zrand = sensor._z_rand
+    for i in range(1000):
+        phit = sensor.p_hit(z_star, z_t[i])
+        pshort = sensor.p_short(z_star, z_t[i])
+        pmax = sensor.p_max(z_t[i])
+        prand = sensor.p_rand(z_t[i])
+            
+        p = zhit*phit + zshort*pshort + zmax*pmax + zrand*prand
+        p_t.append(p)   
+    
 
-
-
+    p_t = np.asarray(p_t)
+    plt.figure()
+    plt.scatter(z_t, p_t, s = 1)
 
 
 

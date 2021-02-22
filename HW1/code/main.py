@@ -8,6 +8,8 @@ import argparse
 import numpy as np
 import sys, os
 
+# from numba import jit, cuda
+
 from map_reader import MapReader
 from motion_model import MotionModel
 from sensor_model import SensorModel
@@ -17,27 +19,27 @@ from matplotlib import pyplot as plt
 from matplotlib import figure as fig
 import time
 
-
+# @cuda.jit(target ="cuda")
 def visualize_map(occupancy_map):
     fig = plt.figure()
     mng = plt.get_current_fig_manager()
     plt.ion()
-    plt.scatter(X_bar[:,0]/10.0, X_bar[:,1]/10.0)
+    # plt.scatter(X_bar[:,0]/10.0, X_bar[:,1]/10.0)
 
     plt.imshow(occupancy_map, cmap='Greys')
     
     plt.axis([0, 800, 0, 800])
 
-
+# @cuda.jit(target ="cuda")
 def visualize_timestep(X_bar, tstep, output_path):
     x_locs = X_bar[:, 0] / 10.0
     y_locs = X_bar[:, 1] / 10.0
-    scat = plt.scatter(x_locs, y_locs, c='r', marker='o')
+    scat = plt.scatter(x_locs, y_locs, c='r', marker='o', s=5)
     # plt.savefig('{}/{:04d}.png'.format(output_path, tstep))   REMOVE COMMENT
     plt.pause(0.00001)
     scat.remove()
 
-
+# @cuda.jit(target ="cuda")
 def init_particles_random(num_particles, occupancy_map):
 
     # initialize [x, y, theta] positions in world_frame for all particles
@@ -53,6 +55,7 @@ def init_particles_random(num_particles, occupancy_map):
 
     return X_bar_init
 
+# @cuda.jit(target ="cuda")
 
 def init_particles_freespace(num_particles, occupancy_map):
 
@@ -83,6 +86,7 @@ def init_particles_freespace(num_particles, occupancy_map):
 
     
     return X_bar_init
+
 
 
 if __name__ == '__main__':
@@ -154,6 +158,7 @@ if __name__ == '__main__':
             odometry_laser = meas_vals[3:6]
             # 180 range measurement values from single laser scan
             ranges = meas_vals[6:-1]
+            nalla = True
 
         print("Processing time step {} at time {}s".format(
             time_idx, time_stamp))
@@ -183,8 +188,10 @@ if __name__ == '__main__':
                 z_t = ranges
                 w_t = sensor_model.beam_range_finder_model(z_t, x_t1)
                 X_bar_new[m, :] = np.hstack((x_t1, w_t))
+                # nalla = True
             else:
                 X_bar_new[m, :] = np.hstack((x_t1, X_bar[m, 3]))
+                # nalla = False
 
         X_bar = X_bar_new
         
@@ -195,8 +202,9 @@ if __name__ == '__main__':
         """
         X_bar = resampler.low_variance_sampler(X_bar)
 
-        # if args.visualize:
-        visualize_timestep(X_bar, time_idx, args.output)
+        if nalla == True:
+            visualize_timestep(X_bar, time_idx, args.output)
 
-        visualize_map(occupancy_map)
-    plt.scatter(X_bar[:,0], X_bar[:,1])
+            visualize_map(occupancy_map)
+            nalla = False
+    # plt.scatter(X_bar[:,0], X_bar[:,1])
