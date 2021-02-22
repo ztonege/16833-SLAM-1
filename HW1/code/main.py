@@ -132,9 +132,11 @@ if __name__ == '__main__':
     Monte Carlo Localization Algorithm : Main Loop
     """
    # if args.visualize:
+    posex = 0
+    posey = 0
+    move = False
+    firstpose = True
     
-    
-
     first_time_idx = True
     for time_idx, line in enumerate(logfile):
 
@@ -148,7 +150,13 @@ if __name__ == '__main__':
         # odometry reading [x, y, theta] in odometry frame
         odometry_robot = meas_vals[0:3]
         time_stamp = meas_vals[-1]
-
+        
+        if firstpose == True:
+            posex = odometry_robot[0]
+            posey = odometry_robot[1]
+            firstpose = False
+        
+            
         # ignore pure odometry measurements for (faster debugging)
         # if ((time_stamp <= 0.0) | (meas_type == "O")):
         #     continue
@@ -200,8 +208,19 @@ if __name__ == '__main__':
         """
         RESAMPLING
         """
-        X_bar = resampler.low_variance_sampler(X_bar)
+        currentposex = odometry_robot[0]
+        currentposey = odometry_robot[1]
+        
+        if(currentposex - posex != 0 or currentposey - posey != 0):
+            move = True
+            X_bar = resampler.low_variance_sampler(X_bar)
 
+        if move == True:
+            posex = odometry_robot[0]
+            posey = odometry_robot[1]
+            move = False
+
+            
         if nalla == True:
             visualize_timestep(X_bar, time_idx, args.output)
 
