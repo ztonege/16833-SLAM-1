@@ -3,15 +3,15 @@
     Initially written by Paloma Sodhi (psodhi@cs.cmu.edu), 2018
     Updated by Wei Dong (weidong@andrew.cmu.edu), 2021
 '''
-
+import cupy as cp
 import numpy as np
 import math
 import time
 import random
 from matplotlib import pyplot as plt
 from scipy.stats import norm
-
 from map_reader import MapReader
+from multiprocessing import Pool
 
 
 class SensorModel:
@@ -40,6 +40,7 @@ class SensorModel:
         
         self._map = occupancy_map
 
+        
     
     def p_hit(self, z_star, z_t):
         
@@ -182,17 +183,9 @@ class SensorModel:
         
         return x2, y2
         
-
-    def beam_range_finder_model(self, z_t1_arr, x_t1):
-        """
-        param[in] z_t1_arr : laser range readings [array of 180 values] at time t
-        param[in] x_t1 : particle state belief [x, y, theta] at time t [world_frame]
-        param[out] prob_zt1 : likelihood of a range scan zt1 at time t
-        """
-        """
-        TODO : Add your code here
-        """
+    def beam_finder(self, args):
         
+        z_t1_arr, x_t1 = args
         q = 0
         K = z_t1_arr.size
         
@@ -208,10 +201,10 @@ class SensorModel:
         zrand = self._z_rand
         
         
-        
+        x1, y1, theta1 =  x_t1_L, y_t1_L, x_t1[2]
         for k in range(1, K+1): #K = 180
             z_t = z_t1_arr[k-1] 
-            x1, y1, theta1 =  x_t1_L, y_t1_L, x_t1[2]
+            # x1, y1, theta1 =  x_t1_L, y_t1_L, x_t1[2]
             x2, y2 = self.endpoint(x1, y1, theta1, k)
             
             points = self.bresenham(x1, y1, x2, y2)
@@ -231,42 +224,110 @@ class SensorModel:
                 q = q + np.log(p)
                 
         # prob_zt1 = q
+        print("q =" , np.exp(q))
         return np.exp(q)
+
+    def beam_range_finder_model(self, z_t1_arr, x_t1):
+        """
+        param[in] z_t1_arr : laser range readings [array of 180 values] at time t
+        param[in] x_t1 : particle state belief [x, y, theta] at time t [world_frame]
+        param[out] prob_zt1 : likelihood of a range scan zt1 at time t
+        """
+        """
+        TODO : Add your code here
+        """
+        # args = []
+        # args.append((z_t1_arr,x_t1))
+        
+        # p = Pool(10)
+        
+        # q = p.map(self.beam_finder, args)
+      
+                
+        # p.close()
+        # p.join()
+      
+            
+        # print("q =", q)  
+        # return q
+
+        
+        q = 1
+        K = z_t1_arr.size
+        
+        x_t1_L = x_t1[0] + 25.0*np.cos(x_t1[2])
+        y_t1_L = x_t1[1] + 25.0*np.sin(x_t1[2])
+        
+        x_t1_L /= 10.0
+        y_t1_L /= 10.0
+        
+        zhit = self._z_hit
+        zshort = self._z_short
+        zmax = self._z_max
+        zrand = self._z_rand
+        
+        
+        x1, y1, theta1 =  x_t1_L, y_t1_L, x_t1[2]
+        for k in range(1, K+1): #K = 180
+            z_t = z_t1_arr[k-1] 
+            # x1, y1, theta1 =  x_t1_L, y_t1_L, x_t1[2]
+            x2, y2 = self.endpoint(x1, y1, theta1, k)
+            
+            points = self.bresenham(x1, y1, x2, y2)
+            #if too slow, try formulating look up table
+            #bresenham and endpoint outside for loop, have to shift center of circle, and pick half circle accordingly
+            
+            z_star = self.true_range(points)
+            
+            phit = self.p_hit(z_star, z_t)
+            pshort = self.p_short(z_star, z_t)
+            pmax = self.p_max(z_t)
+            prand = self.p_rand(z_t)
+            
+            
+            p = zhit*phit + zshort*pshort + zmax*pmax + zrand*prand
+            if(p > 0):
+                q = q*p
+                
+        # prob_zt1 = q
+        # print("q =", q)  
+        return q
     
+
     
 if __name__ == "__main__":
     
-    
-    path_map ='../data/map/wean.dat'
-    map_obj = MapReader(path_map)
-    occupancy_map = map_obj.get_map()
+    pass
+    # path_map ='../data/map/wean.dat'
+    # map_obj = MapReader(path_map)
+    # occupancy_map = map_obj.get_map()
         
-    sensor = SensorModel(occupancy_map)
+    # sensor = SensorModel(occupancy_map)
         
-    # points = sensor.bresenham(200,500, 100, 600)
-    # distance = sensor.true_range(points)
-    # print(points)
-    # print(distance)
-    z_star = 500
-    z_t = np.arange(1000)
-    p_t = []
-    zhit = sensor._z_hit
-    zshort = sensor._z_short
-    zmax = sensor._z_max
-    zrand = sensor._z_rand
-    for i in range(1000):
-        phit = sensor.p_hit(z_star, z_t[i])
-        pshort = sensor.p_short(z_star, z_t[i])
-        pmax = sensor.p_max(z_t[i])
-        prand = sensor.p_rand(z_t[i])
+    # # points = sensor.bresenham(200,500, 100, 600)
+    # # distance = sensor.true_range(points)
+    # # print(points)
+    # # print(distance)
+    # z_star = 500
+    # z_t = np.arange(1000)
+    # p_t = []
+    # zhit = sensor._z_hit
+    # zshort = sensor._z_short
+    # zmax = sensor._z_max
+    # zrand = sensor._z_rand
+    # for i in range(1000):
+    #     phit = sensor.p_hit(z_star, z_t[i])
+    #     pshort = sensor.p_short(z_star, z_t[i])
+    #     pmax = sensor.p_max(z_t[i])
+    #     prand = sensor.p_rand(z_t[i])
             
-        p = zhit*phit + zshort*pshort + zmax*pmax + zrand*prand
-        p_t.append(p)   
+    #     p = zhit*phit + zshort*pshort + zmax*pmax + zrand*prand
+    #     p_t.append(p)   
     
 
-    p_t = np.asarray(p_t)
-    plt.figure()
-    plt.scatter(z_t, p_t, s = 1)
+    # p_t = np.asarray(p_t)
+    # plt.figure()
+    # plt.scatter(z_t, p_t, s = 1)
 
 
 

@@ -13,6 +13,7 @@ import math
 import time
 from matplotlib import pyplot as plt
 from scipy.stats import norm
+from multiprocessing import Pool
 
 from map_reader import MapReader
 
