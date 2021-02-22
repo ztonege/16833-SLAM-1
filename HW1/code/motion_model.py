@@ -44,12 +44,12 @@ class MotionModel:
         alpha4 = self._alpha4
         
         drot1 = np.arctan2(u_t1[1] - u_t0[1],u_t1[0] - u_t0[0]) - u_t0[2]
-        dtrans = np.sqrt((u_t1[1] - u_t0[1])**2+(u_t1[0] - u_t0[0])**2)
+        dtrans = np.sqrt((u_t1[1] - u_t0[1])**2 + (u_t1[0] - u_t0[0])**2)
         drot2 = u_t1[2] - u_t0[2] - drot1
         
-        drot1_ = drot1 - np.random.normal(0, np.sqrt(alpha1*drot1**2 + alpha2*dtrans**2))
-        dtrans_ = dtrans - np.random.normal(0, np.sqrt(alpha3*dtrans**2 + alpha4*drot1**2 + alpha4*drot2**2))
-        drot2_ = drot2 - np.random.normal(0, np.sqrt(alpha1*drot2**2 + alpha2*dtrans**2))
+        drot1_ = drot1 - np.random.normal(0, np.sqrt(alpha1*(drot1**2) + alpha2*(dtrans**2)))
+        dtrans_ = dtrans - np.random.normal(0, np.sqrt(alpha3*(dtrans**2) + alpha4*(drot1**2) + alpha4*(drot2**2)))
+        drot2_ = drot2 - np.random.normal(0, np.sqrt(alpha1*(drot2**2) + alpha2*(dtrans**2)))
         
         x_t1[0] = x_t0[0] + dtrans_*np.cos(x_t0[2] + drot1_)
         x_t1[1] = x_t0[1] + dtrans_*np.sin(x_t0[2] + drot1_)

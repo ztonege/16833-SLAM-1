@@ -33,7 +33,7 @@ def visualize_timestep(X_bar, tstep, output_path):
     x_locs = X_bar[:, 0] / 10.0
     y_locs = X_bar[:, 1] / 10.0
     scat = plt.scatter(x_locs, y_locs, c='r', marker='o')
-    plt.savefig('{}/{:04d}.png'.format(output_path, tstep))
+    # plt.savefig('{}/{:04d}.png'.format(output_path, tstep))   REMOVE COMMENT
     plt.pause(0.00001)
     scat.remove()
 
@@ -61,8 +61,27 @@ def init_particles_freespace(num_particles, occupancy_map):
     TODO : Add your code here
     This version converges faster than init_particles_random
     """
-    X_bar_init = np.zeros((num_particles, 4))
+    
+    # X_bar_init = np.zeros((num_particles, 4))
 
+    freespace_map = np.where(occupancy_map == 0)
+    print("free space" ,np.shape(freespace_map))
+    xfree, yfree = freespace_map
+    print("min , max", np.min(xfree), np.max(xfree))
+    index = np.random.randint(1, xfree.size, num_particles)
+    
+    y0_vals = 10.0*xfree[index].reshape(num_particles, 1)
+    x0_vals = 10.0*yfree[index].reshape(num_particles, 1)
+    
+    theta0_vals = np.random.uniform(-3.14, 3.14, (num_particles, 1))
+
+    # initialize weights for all particles
+    w0_vals = np.ones((num_particles, 1), dtype=np.float64)
+    w0_vals = w0_vals / num_particles
+
+    X_bar_init = np.hstack((x0_vals, y0_vals, theta0_vals, w0_vals))
+
+    
     return X_bar_init
 
 
@@ -100,8 +119,8 @@ if __name__ == '__main__':
     resampler = Resampling()
 
     num_particles = args.num_particles
-    X_bar = init_particles_random(num_particles, occupancy_map)
-    # X_bar = init_particles_freespace(num_particles, occupancy_map)
+    # X_bar = init_particles_random(num_particles, occupancy_map)
+    X_bar = init_particles_freespace(num_particles, occupancy_map)
     
     
     

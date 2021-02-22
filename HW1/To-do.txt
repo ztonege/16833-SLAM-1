@@ -1,5 +1,7 @@
 TO-DO SLAM HW 1
 
+
+
 Motion Model
  - Tune paramters
  - Check coordinates of input
@@ -10,6 +12,7 @@ Sensor Model
  - Subsampling?
  - Adjust weight of p_rand to be close to 1 to avoid numerical issues 
  - Ray tracing check
+	- Check for -1 map points, return distance if hits
 	- Number of beams
         - Angles incremented at intervals
 	

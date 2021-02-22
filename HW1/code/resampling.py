@@ -39,10 +39,7 @@ class Resampling:
         # b = 0
         # count = 0
         for i in range(num_particles):
-            
-            
-            
-        
+  
             # if(freq[i] > 0):
                 
             #     X_bar_resampled[b] = X_bar[count]
@@ -104,13 +101,14 @@ class Resampling:
     
     
 if __name__ == "__main__":
-    
+    pass
+
     sampler = Resampling()
     
-    X_bar = (np.arange(40)).reshape(10,4)
-    X_bar[9:10, 3] = 500
-    print(X_bar)
+    # X_bar = (np.arange(40)).reshape(10,4)
+    # X_bar[9:10, 3] = 500
+    # print(X_bar)
     
-    X_bar_resampled = sampler.low_variance_sampler(X_bar)
-    print(X_bar_resampled)
+    # X_bar_resampled = sampler.low_variance_sampler(X_bar)
+    # print(X_bar_resampled)
     

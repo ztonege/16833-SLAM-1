@@ -41,28 +41,34 @@ class SensorModel:
         self._map = occupancy_map
 
     
-    def p_hit(self, z_star):
+    def p_hit(self, z_star, z_t):
         
-        return np.random.normal(z_star, self._sigma_hit)
-    
+        if(0 <= z_t <= self._max_range):
+            return np.random.normal(z_star, self._sigma_hit)
+        else:
+            return 0
+        
     def p_short(self, z_star, z_t):
         
-        if(z_star <= z_t):        
-            return np.random.exponential(1/self._lambda_short)
+        if(0 <= z_t <= z_star):
+            
+            return self._lambda_short*(np.exp(-self._lambda_short*z_t))
+            
+            # return np.random.exponential(1/self._lambda_short)
         
         else:
             return 0
         
     def p_max(self, z_t):
     
-        if(z_t >= 0.95*self._max_range and z_t <= 1.05*self._max_range):
+        if(z_t >= 0.95*self._max_range and z_t <= 1.05*self._max_range): #jugaad might have to fix
             return 1
         else:
             return 0
         
         
     def p_rand(self, z_t):
-        if(z_t < self._max_range and z_t >= 0):
+        if(0 <= z_t < self._max_range):
            return 1/self._max_range
         
         else:
@@ -75,11 +81,11 @@ class SensorModel:
               
         
         x1, y1 = points[0]
-        
-        for i, point in enumerate(points):
-            x, y = point
-            x = np.int(np.round(x/10))
-            y = np.int(np.round(y/10))
+        for i in range(1,len(points) + 1):
+        # for i, point in enumerate(points):
+            x, y = points[i]
+            # x = np.int(np.round(x/10.0))
+            # y = np.int(np.round(y/10.0))
             # print("x, y", x, y)
             m = self._map[x, y]
             # print("m", m)
@@ -90,7 +96,8 @@ class SensorModel:
             if(prob[0] == 1):
                 distance = np.sqrt((x - x1)**2 + (y - y1)**2)
                 break
-            
+            if(m == -1): #Might not be needed
+                distance = 0
             else:
                 distance = self._max_range/10
             
@@ -157,6 +164,7 @@ class SensorModel:
     
     def endpoint(self, x1, y1, theta1, k):
         
+        #Assuming theta1 faces straight, we go from -90 to 90
         x2 = x1 + self._max_range/10 * np.cos(theta1 - np.pi/2 + (k-1)*np.pi/180)
         y2 = y1 + self._max_range/10 * np.sin(theta1 - np.pi/2 + (k-1)*np.pi/180)
         
@@ -176,39 +184,52 @@ class SensorModel:
         q = 1
         K = z_t1_arr.size
         
+        x_t1_L = x_t1[0] + 25.0*np.cos(x_t1[2])
+        y_t1_L = x_t1[1] + 25.0*np.sin(x_t1[2])
+        
+        x_t1_L /= 10.0
+        y_t1_L /= 10.0
+        
         zhit = self._z_hit
         zshort = self._z_short
         zmax = self._z_max
         zrand = self._z_rand
         
-        for k in range(1, K+1):
-            z_t = z_t1_arr[k-1]
-            x1, y1, theta1 =  x_t1[0], x_t1[1], x_t1[2]
+        
+        
+        for k in range(1, K+1): #K = 180
+            z_t = z_t1_arr[k-1] 
+            x1, y1, theta1 =  x_t1_L, y_t1_L, x_t1[2]
             x2, y2 = self.endpoint(x1, y1, theta1, k)
             
             points = self.bresenham(x1, y1, x2, y2)
+            #if too slow, try formulating look up table
+            #bresenham and endpoint outside for loop, have to shift center of circle, and pick half circle accordingly
+            
             z_star = self.true_range(points)
             
-            phit = self.p_hit(z_star)
+            phit = self.p_hit(z_star, z_t)
             pshort = self.p_short(z_star, z_t)
             pmax = self.p_max(z_t)
             prand = self.p_rand(z_t)
+            
             
             p = zhit*phit + zshort*pshort + zmax*pmax + zrand*prand
             
             q = q*p
                 
-        prob_zt1 = q
-        return prob_zt1
+        # prob_zt1 = q
+        return q
     
     
 if __name__ == "__main__":
+    
+    pass
+    # path_map ='../data/map/wean.dat'
+    # map_obj = MapReader(path_map)
+    # occupancy_map = map_obj.get_map()
         
-    path_map ='../data/map/wean.dat'
-    map_obj = MapReader(path_map)
-    occupancy_map = map_obj.get_map()
-        
-    sensor = SensorModel(occupancy_map)
+    # sensor = SensorModel(occupancy_map)
         
     # points = sensor.bresenham(200,500, 100, 600)
     # distance = sensor.true_range(points)
