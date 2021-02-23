@@ -3,7 +3,7 @@
     Initially written by Paloma Sodhi (psodhi@cs.cmu.edu), 2018
     Updated by Wei Dong (weidong@andrew.cmu.edu), 2021
 '''
-import cupy as cp
+# import cupy as cp
 import numpy as np
 import math
 import time
@@ -11,7 +11,6 @@ import random
 from matplotlib import pyplot as plt
 from scipy.stats import norm
 from map_reader import MapReader
-from multiprocessing import Pool
 
 
 class SensorModel:
@@ -24,17 +23,17 @@ class SensorModel:
         TODO : Tune Sensor Model parameters here
         The original numbers are for reference but HAVE TO be tuned.
         """
-        self._z_hit = 100
-        self._z_short = 30
-        self._z_max = 0.5
-        self._z_rand = 5 
+        self._z_hit = 0.7*10
+        self._z_short = 0.1*10
+        self._z_max = 0.02*10
+        self._z_rand = 0.15*10
 
-        self._sigma_hit = 50 #50
-        self._lambda_short = 0.01 #0.1
+        self._sigma_hit = 10 #50
+        self._lambda_short = 0.2#0.1
 
         self._max_range = 1000 #1000
         self._min_probability = 0.35
-        self._subsampling = 2
+        self._subsampling = 5
 
         self._norm_wts = 1.0
         
@@ -178,8 +177,8 @@ class SensorModel:
     def endpoint(self, x1, y1, theta1, k):
         
         #Assuming theta1 faces straight, we go from -90 to 90
-        x2 = x1 + self._max_range/10 * np.cos(theta1 - np.pi/2 + (k-1)*np.pi/180)
-        y2 = y1 + self._max_range/10 * np.sin(theta1 - np.pi/2 + (k-1)*np.pi/180)
+        x2 = x1 + self._max_range/10 * np.cos(theta1 - np.pi/2 + (k*self._subsampling-1)*np.pi/180)
+        y2 = y1 + self._max_range/10 * np.sin(theta1 - np.pi/2 + (k*self._subsampling-1)*np.pi/180)
         
         return x2, y2
         
@@ -253,7 +252,7 @@ class SensorModel:
 
         
         q = 1
-        K = z_t1_arr.size
+        K = np.int(z_t1_arr.size/self._subsampling)
         
         x_t1_L = x_t1[0] + 25.0*np.cos(x_t1[2])
         y_t1_L = x_t1[1] + 25.0*np.sin(x_t1[2])
@@ -269,7 +268,7 @@ class SensorModel:
         
         x1, y1, theta1 =  x_t1_L, y_t1_L, x_t1[2]
         for k in range(1, K+1): #K = 180
-            z_t = z_t1_arr[k-1] 
+            z_t = z_t1_arr[k*self._subsampling-1] 
             # x1, y1, theta1 =  x_t1_L, y_t1_L, x_t1[2]
             x2, y2 = self.endpoint(x1, y1, theta1, k)
             
@@ -297,37 +296,37 @@ class SensorModel:
     
 if __name__ == "__main__":
     
-    pass
-    # path_map ='../data/map/wean.dat'
-    # map_obj = MapReader(path_map)
-    # occupancy_map = map_obj.get_map()
+    # pass
+    path_map ='../data/map/wean.dat'
+    map_obj = MapReader(path_map)
+    occupancy_map = map_obj.get_map()
         
-    # sensor = SensorModel(occupancy_map)
+    sensor = SensorModel(occupancy_map)
         
-    # # points = sensor.bresenham(200,500, 100, 600)
-    # # distance = sensor.true_range(points)
-    # # print(points)
-    # # print(distance)
-    # z_star = 500
-    # z_t = np.arange(1000)
-    # p_t = []
-    # zhit = sensor._z_hit
-    # zshort = sensor._z_short
-    # zmax = sensor._z_max
-    # zrand = sensor._z_rand
-    # for i in range(1000):
-    #     phit = sensor.p_hit(z_star, z_t[i])
-    #     pshort = sensor.p_short(z_star, z_t[i])
-    #     pmax = sensor.p_max(z_t[i])
-    #     prand = sensor.p_rand(z_t[i])
+    # points = sensor.bresenham(200,500, 100, 600)
+    # distance = sensor.true_range(points)
+    # print(points)
+    # print(distance)
+    z_star = 500
+    z_t = np.arange(1000)
+    p_t = []
+    zhit = sensor._z_hit
+    zshort = sensor._z_short
+    zmax = sensor._z_max
+    zrand = sensor._z_rand
+    for i in range(1000):
+        phit = sensor.p_hit(z_star, z_t[i])
+        pshort = sensor.p_short(z_star, z_t[i])
+        pmax = sensor.p_max(z_t[i])
+        prand = sensor.p_rand(z_t[i])
             
-    #     p = zhit*phit + zshort*pshort + zmax*pmax + zrand*prand
-    #     p_t.append(p)   
+        p = zhit*phit + zshort*pshort + zmax*pmax + zrand*prand
+        p_t.append(p)   
     
 
-    # p_t = np.asarray(p_t)
-    # plt.figure()
-    # plt.scatter(z_t, p_t, s = 1)
+    p_t = np.asarray(p_t)
+    plt.figure()
+    plt.scatter(z_t, p_t, s = 1)
 
 
 
