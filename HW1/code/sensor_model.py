@@ -23,15 +23,15 @@ class SensorModel:
         TODO : Tune Sensor Model parameters here
         The original numbers are for reference but HAVE TO be tuned.
         """
-        self._z_hit = 0.7*10
-        self._z_short = 0.1*10
-        self._z_max = 0.02*10
-        self._z_rand = 0.15*10
+        self._z_hit = 0.6
+        self._z_short = 0.3
+        self._z_max = 0.007
+        self._z_rand = 990
 
-        self._sigma_hit = 10 #50
-        self._lambda_short = 0.2#0.1
+        self._sigma_hit = 25 #50
+        self._lambda_short = 0.01#0.1
 
-        self._max_range = 1000 #1000
+        self._max_range = 1200 #1000
         self._min_probability = 0.35
         self._subsampling = 5
 
@@ -308,13 +308,13 @@ if __name__ == "__main__":
     # print(points)
     # print(distance)
     z_star = 500
-    z_t = np.arange(1000)
+    z_t = np.arange(sensor._max_range)
     p_t = []
     zhit = sensor._z_hit
     zshort = sensor._z_short
     zmax = sensor._z_max
     zrand = sensor._z_rand
-    for i in range(1000):
+    for i in range(sensor._max_range):
         phit = sensor.p_hit(z_star, z_t[i])
         pshort = sensor.p_short(z_star, z_t[i])
         pmax = sensor.p_max(z_t[i])

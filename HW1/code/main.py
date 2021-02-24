@@ -232,7 +232,7 @@ if __name__ == '__main__':
     parser.add_argument('--path_to_map', default='../data/map/wean.dat')
     parser.add_argument('--path_to_log', default='../data/log/robotdata1.log')
     parser.add_argument('--output', default='results')
-    parser.add_argument('--num_particles', default=500, type=int)
+    parser.add_argument('--num_particles', default=200, type=int)
     parser.add_argument('--visualize', action='store_true')
     args = parser.parse_args()
 
@@ -249,8 +249,8 @@ if __name__ == '__main__':
     resampler = Resampling()
 
     num_particles = args.num_particles
-    # X_bar = init_particles_random(num_particles, occupancy_map)
-    X_bar = init_particles_freespace(num_particles, occupancy_map)
+    X_bar = init_particles_random(num_particles, occupancy_map)
+    # X_bar = init_particles_freespace(num_particles, occupancy_map)
     
     
     
