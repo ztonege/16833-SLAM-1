@@ -22,8 +22,6 @@ import time
 from multiprocessing import Pool
 import random
 
-
-# @cuda.jit(target ="cuda")
 def visualize_map(occupancy_map):
     fig = plt.figure()
     mng = plt.get_current_fig_manager()
@@ -34,7 +32,6 @@ def visualize_map(occupancy_map):
     
     plt.axis([0, 800, 0, 800])
 
-# @cuda.jit(target ="cuda")
 def visualize_timestep(X_bar, tstep, output_path):
     x_locs = X_bar[:, 0] / 10.0
     y_locs = X_bar[:, 1] / 10.0
@@ -43,7 +40,6 @@ def visualize_timestep(X_bar, tstep, output_path):
     plt.pause(0.00001)
     scat.remove()
 
-# @cuda.jit(target ="cuda")
 def init_particles_random(num_particles, occupancy_map):
 
     # initialize [x, y, theta] positions in world_frame for all particles
@@ -59,8 +55,6 @@ def init_particles_random(num_particles, occupancy_map):
 
     return X_bar_init
 
-# @cuda.jit(target ="cuda")
-
 def init_particles_freespace(num_particles, occupancy_map):
 
     # initialize [x, y, theta] positions in world_frame for all particles
@@ -72,9 +66,9 @@ def init_particles_freespace(num_particles, occupancy_map):
     # X_bar_init = np.zeros((num_particles, 4))
 
     freespace_map = np.where(occupancy_map == 0)
-    print("free space" ,np.shape(freespace_map))
+    # print("free space" ,np.shape(freespace_map))
     xfree, yfree = freespace_map
-    print("min , max", np.min(xfree), np.max(xfree))
+    # print("min , max", np.min(xfree), np.max(xfree))
     index = np.random.randint(1, xfree.size, num_particles)
     
     y0_vals = 10.0*xfree[index].reshape(num_particles, 1)
@@ -90,7 +84,6 @@ def init_particles_freespace(num_particles, occupancy_map):
 
     
     return X_bar_init
-
 
 def monte_carlo(mpargs):
     
@@ -115,8 +108,6 @@ def monte_carlo(mpargs):
     sensor_model = SensorModel(occupancy_map)
     resampler = Resampling()
 
-
-   
     posex = 0
     posey = 0
     move = False
@@ -125,7 +116,6 @@ def monte_carlo(mpargs):
     first_time_idx = True
     for time_idx, line in enumerate(logfile):
         
-
         # Read a single 'line' from the log file (can be either odometry or laser measurement)
         # L : laser scan measurement, O : odometry measurement
         meas_type = line[0]
@@ -152,7 +142,7 @@ def monte_carlo(mpargs):
             odometry_laser = meas_vals[3:6]
             # 180 range measurement values from single laser scan
             ranges = meas_vals[6:-1]
-            nalla = True
+            viz = True
 
         print("Processing time step {} at time {}s".format(
             time_idx, time_stamp))
@@ -164,6 +154,8 @@ def monte_carlo(mpargs):
 
         X_bar_new = np.zeros((num_particles, 4), dtype=np.float64)
         u_t1 = odometry_robot
+
+        # print("reach")
 
         # Note: this formulation is intuitive but not vectorized; looping in python is SLOW.
         # Vectorized version will receive a bonus. i.e., the functions take all particles as the input and process them in a vector.
@@ -182,10 +174,9 @@ def monte_carlo(mpargs):
                 z_t = ranges
                 w_t = sensor_model.beam_range_finder_model(z_t, x_t1)
                 X_bar_new[m, :] = np.hstack((x_t1, w_t))
-                # nalla = True
+                
             else:
                 X_bar_new[m, :] = np.hstack((x_t1, X_bar[m, 3]))
-                # nalla = False
 
         X_bar = X_bar_new
         
@@ -207,11 +198,11 @@ def monte_carlo(mpargs):
             move = False
 
             
-        if nalla == True:
+        if viz == True:
             visualize_timestep(X_bar, time_idx, args.output)
 
             visualize_map(occupancy_map)
-            nalla = False
+            viz = False
     # plt.scatter(X_bar[:,0], X_bar[:,1])
 
 
@@ -232,7 +223,7 @@ if __name__ == '__main__':
     parser.add_argument('--path_to_map', default='../data/map/wean.dat')
     parser.add_argument('--path_to_log', default='../data/log/robotdata1.log')
     parser.add_argument('--output', default='results')
-    parser.add_argument('--num_particles', default=500, type=int)
+    parser.add_argument('--num_particles', default=10, type=int)
     parser.add_argument('--visualize', action='store_true')
     args = parser.parse_args()
 

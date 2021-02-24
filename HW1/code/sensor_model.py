@@ -33,12 +33,12 @@ class SensorModel:
 
         self._max_range = 1000 #1000
         self._min_probability = 0.35
-        self._subsampling = 5
+        self._subsampling = 30
 
         self._norm_wts = 1.0
         
         self._map = occupancy_map
-
+        self._end_points = []
         
     
     def p_hit(self, z_star, z_t):
@@ -83,8 +83,9 @@ class SensorModel:
               
         
         x1, y1 = points[0]
+        e_x, e_y = x1, y1
+        # distance = 0
         for i in range(1,len(points)):
-        # for i, point in enumerate(points):
             x, y = points[i]
             # x = np.int(np.round(x/10.0))
             # y = np.int(np.round(y/10.0))
@@ -96,19 +97,31 @@ class SensorModel:
                 
             m = self._map[x, y]
             # print("m", m)
-            prob = random.choices([0,1], weights = (100*(1-m), 100*m), k = 1)
+
+            # prob = random.choices([0,1], weights = (100*(1-m), 100*m), k = 1)
+            
             # print("prob", prob)
             # print(m, prob)
             
-            if(prob[0] == 1):
+
+
+            # if(prob[0] == 1 or m >= 0.75 or m == -1):
+            if(m >= 0.75 or m == -1):
+                e_x, e_y = x, y
                 distance = np.sqrt((x - x1)**2 + (y - y1)**2)
                 break
-            if(m == -1): #Might not be needed
-                distance = 0
-            else:
+            # if(m == -1): #Might not be needed
+            #     distance = 0
+
+
+            if(i == len(points)-1):
+                e_x, e_y = x, y
                 distance = self._max_range/10
-            
-        return distance
+            else:
+                continue
+
+        self._end_points.append((e_x, e_y))    
+        return e_x, e_y, distance
         
            
     
@@ -226,6 +239,22 @@ class SensorModel:
         print("q =" , np.exp(q))
         return np.exp(q)
 
+    def ray_viz(self, ray_pt):
+        s_x, s_y = np.int(np.round(ray_pt[0][0])), np.int(np.round(ray_pt[0][1]))
+        ray = []
+        print(type(ray))
+        for i in range(1, ray_pt.shape[0]):
+            e_x, e_y = ray_pt[i][0], ray_pt[i][1]
+            # print(s_x, s_y,e_x, e_y)
+            plt.plot([s_x, e_x], [s_y, e_y], c='b')
+            # points = self.bresenham(s_x, s_y, e_x, e_y)
+            # ray.append(list(points))
+            # print(ray[0][0])
+        plt.show()
+        print("Ray shape =", (np.array(ray).shape))
+
+
+
     def beam_range_finder_model(self, z_t1_arr, x_t1):
         """
         param[in] z_t1_arr : laser range readings [array of 180 values] at time t
@@ -253,6 +282,7 @@ class SensorModel:
         
         q = 1
         K = np.int(z_t1_arr.size/self._subsampling)
+        # print("The value of K is =", K) 
         
         x_t1_L = x_t1[0] + 25.0*np.cos(x_t1[2])
         y_t1_L = x_t1[1] + 25.0*np.sin(x_t1[2])
@@ -260,14 +290,16 @@ class SensorModel:
         x_t1_L /= 10.0
         y_t1_L /= 10.0
         
+        z_star = 0
         zhit = self._z_hit
         zshort = self._z_short
         zmax = self._z_max
         zrand = self._z_rand
-        
-        
+    
         x1, y1, theta1 =  x_t1_L, y_t1_L, x_t1[2]
-        for k in range(1, K+1): #K = 180
+        pts = np.array([x1, y1, z_star]).reshape(1, -1)
+
+        for k in range(1, K+1): #K = 36
             z_t = z_t1_arr[k*self._subsampling-1] 
             # x1, y1, theta1 =  x_t1_L, y_t1_L, x_t1[2]
             x2, y2 = self.endpoint(x1, y1, theta1, k)
@@ -276,7 +308,13 @@ class SensorModel:
             #if too slow, try formulating look up table
             #bresenham and endpoint outside for loop, have to shift center of circle, and pick half circle accordingly
             
-            z_star = self.true_range(points)
+            e_x, e_y, z_star = self.true_range(points)
+            end_pt = np.array([e_x, e_y, z_star]).reshape(1, -1)
+            pts = np.append(pts, end_pt, axis = 0)
+            # print("Endpoints = ", e_x, e_y)
+            print("Starting point =", np.int(np.round(x1)), np.int(np.round(y1)))
+            print("Distance =", z_star)
+            print("end pt", end_pt)
             
             phit = self.p_hit(z_star, z_t)
             pshort = self.p_short(z_star, z_t)
@@ -288,6 +326,11 @@ class SensorModel:
             if(p > 0):
                 q = q*p
                 
+        # print("Endpoints = ", pts.shape) #(19, 2)
+        # print("Starting point =", x1, y1)
+        # print("Distance =", z_star)
+
+        self.ray_viz(pts)
         # prob_zt1 = q
         # print("q =", q)  
         return q
