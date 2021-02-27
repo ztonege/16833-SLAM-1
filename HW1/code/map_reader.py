@@ -30,12 +30,13 @@ class MapReader:
     def visualize_map(self):
         fig = plt.figure()
         mng = plt.get_current_fig_manager()
-        mng.resize(*mng.window.maxsize())
+        # mng.resize(*mng.window.maxsize())
         plt.ion()
         plt.imshow(self._occupancy_map, cmap='Greys')
         plt.axis([0, 800, 0, 800])
+        plt.scatter(200,600)
         plt.draw()
-        plt.pause(0)
+        # plt.pause(0)
 
     def get_map(self):
         return self._occupancy_map
