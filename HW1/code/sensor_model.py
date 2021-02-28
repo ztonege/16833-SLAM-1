@@ -23,19 +23,17 @@ class SensorModel:
         TODO : Tune Sensor Model parameters here
         The original numbers are for reference but HAVE TO be tuned.
         """
-        self._z_hit = 500
-        self._z_short = 25
-        self._z_max = 0.5
-        self._z_rand = 2500
+        self._z_hit = 100#300 #1
+        self._z_short = 5#50 #0.1
+        self._z_max = 0.02#0.15 #0.1
+        self._z_rand = 6000 #6000 #100
 
+        self._sigma_hit =500#600 #50
+        self._lambda_short = 0.001 #0.0006 #0.1
 
-
-        self._sigma_hit = 250 #50
-        self._lambda_short = 0.005#0.1
-
-        self._max_range = 8183 #1000
-        self._min_probability = 0.35
-        self._subsampling = 5
+        self._max_range = 8183 #8183 #1000
+        self._min_probability = 0.35 #0.35
+        self._subsampling = 30
 
         self._norm_wts = 1.0
         
@@ -65,7 +63,7 @@ class SensorModel:
         
     def p_max(self, z_t):
     
-        if(z_t >= 0.90*self._max_range and z_t <=8183): #jugaad might have to fix
+        if(z_t >= 0.77*self._max_range and z_t <=self._max_range): #jugaad might have to fix
             return 1
         else:
             return 0
@@ -93,9 +91,9 @@ class SensorModel:
             # y = np.int(np.round(y/10.0))
             # print("x, y", x, y)
             
-            if(x >= 800 or y >= 800):
-                x = 799
-                y = 799
+            # if(x >= 800 or y >= 800):
+            #     x = 799
+            #     y = 799
                 
             m = self._map[x, y]
             # print("m", m)
@@ -110,7 +108,8 @@ class SensorModel:
             if(prob[0] == 1 or m >= self._min_probability or m == -1):
             # if(m >= 0.75 or m == -1):
                 e_x, e_y = x, y
-                distance = np.sqrt((x - x1)**2 + (y - y1)**2)
+                distance = 10*np.sqrt((x - x1)**2 + (y - y1)**2)
+                
                 break
             # if(m == -1): #Might not be needed
             #     distance = 0
@@ -118,11 +117,12 @@ class SensorModel:
 
             if(i == len(points)-1):
                 e_x, e_y = x, y
-                distance = self._max_range/10
+                distance = self._max_range
             else:
                 continue
 
         self._end_points.append((e_x, e_y))    
+        
         return e_x, e_y, distance
         
            
@@ -192,8 +192,8 @@ class SensorModel:
     def endpoint(self, x1, y1, theta1, k):
         
         #Assuming theta1 faces straight, we go from -90 to 90
-        x2 = x1 + self._max_range/10 * np.cos(theta1 - np.pi/2 + (k*self._subsampling-1)*np.pi/180)
-        y2 = y1 + self._max_range/10 * np.sin(theta1 - np.pi/2 + (k*self._subsampling-1)*np.pi/180)
+        x2 = x1 + self._max_range/10 * np.cos(theta1 - np.pi/2 + (k*self._subsampling)*np.pi/180) #removed -1
+        y2 = y1 + self._max_range/10 * np.sin(theta1 - np.pi/2 + (k*self._subsampling)*np.pi/180)
         
         return x2, y2
         
@@ -248,7 +248,7 @@ class SensorModel:
         for i in range(1, ray_pt.shape[0]):
             e_x, e_y = ray_pt[i][0], ray_pt[i][1]
             # print(s_x, s_y,e_x, e_y)
-            plt.plot([s_y, e_y], [s_x, e_x], c='b')
+            plt.plot([s_y, e_y], [s_x, e_x], c='r')
             # points = self.bresenham(s_x, s_y, e_x, e_y)
             # ray.append(list(points))
             # print(ray[0][0])
@@ -292,14 +292,13 @@ class SensorModel:
         x_t1_L /= 10.0
         y_t1_L /= 10.0
         
-        z_star = 0
         zhit = self._z_hit
         zshort = self._z_short
         zmax = self._z_max
         zrand = self._z_rand
     
         x1, y1, theta1 =  x_t1_L, y_t1_L, x_t1[2]
-        pts = np.array([x1, y1, z_star]).reshape(1, -1)
+        pts = np.array([x1, y1]).reshape(1, -1)
 
         for k in range(1, K+1): #K = 36
             z_t = z_t1_arr[k*self._subsampling-1] 
@@ -311,7 +310,7 @@ class SensorModel:
             #bresenham and endpoint outside for loop, have to shift center of circle, and pick half circle accordingly
             
             e_x, e_y, z_star = self.true_range(points)
-            end_pt = np.array([e_x, e_y, z_star]).reshape(1, -1)
+            end_pt = np.array([e_x, e_y]).reshape(1, -1)
             pts = np.append(pts, end_pt, axis = 0)
             # print("Endpoints = ", e_x, e_y)
             # print("Starting point =", np.int(np.round(x1)), np.int(np.round(y1)))
@@ -332,7 +331,7 @@ class SensorModel:
         # print("Starting point =", x1, y1)
         # print("Distance =", z_star)
 
-        # self.ray_viz(pts)
+        self.ray_viz(pts)
         # prob_zt1 = q
         # print("q =", q)  
         return q
@@ -370,6 +369,7 @@ if __name__ == "__main__":
     
 
     p_t = np.asarray(p_t)
+    
     plt.figure()
     plt.scatter(z_t, p_t, s = 1)
 

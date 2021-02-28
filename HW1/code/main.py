@@ -35,7 +35,9 @@ def visualize_map(occupancy_map):
 def visualize_timestep(X_bar, tstep, output_path):
     x_map = X_bar[:, 1] / 10.0
     y_map = X_bar[:, 0] / 10.0
-    scat = plt.scatter(x_map, y_map, c='r', marker='o', s=5)
+    # x_map = X_bar[:, 0] / 10.0
+    # y_map = X_bar[:, 1] / 10.0
+    scat = plt.scatter(x_map, y_map, c='b', marker='o', s=5)
     plt.savefig('{}/{:04d}.png'.format(output_path, tstep))   #REMOVE COMMENT
     plt.pause(0.00001)
     scat.remove()
@@ -43,15 +45,18 @@ def visualize_timestep(X_bar, tstep, output_path):
 def init_particles_random(num_particles, occupancy_map):
 
     # initialize [x, y, theta] positions in world_frame for all particles
-    y0_vals = np.random.uniform(0, 7000, (num_particles, 1))
-    x0_vals = np.random.uniform(3000, 7000, (num_particles, 1))
+    # y0_vals = np.random.uniform(0, 7000, (num_particles, 1))
+    # x0_vals = np.random.uniform(3000, 7000, (num_particles, 1))
     theta0_vals = np.random.uniform(-3.14, 3.14, (num_particles, 1))
+
+    y0_vals = np.random.uniform(3000, 5000, (num_particles, 1))
+    x0_vals = np.random.uniform(3700, 4700, (num_particles, 1))
 
     # initialize weights for all particles
     w0_vals = np.ones((num_particles, 1), dtype=np.float64)
     w0_vals = w0_vals / num_particles
 
-    X_bar_init = np.hstack((x0_vals, y0_vals, theta0_vals, w0_vals))
+    X_bar_init = np.hstack((y0_vals, x0_vals, theta0_vals, w0_vals))
 
     return X_bar_init
 
@@ -82,11 +87,15 @@ def init_particles_freespace(num_particles, occupancy_map):
 
     # X_bar_init = np.hstack((x0_vals, 800 - y0_vals, theta0_vals, w0_vals))
 
-    freespace_map = np.where(occupancy_map == 0) #should get [y', x']
+    freespace_map = np.where(occupancy_map == 0)
+    # and np.where(occupancy_map != -1) #should get [y', x']
     
     xfree, yfree = freespace_map
     
+    np.random.seed(3000)
+    
     index = np.random.randint(1, xfree.size, num_particles)
+    
     
     x_dash = 10.0*yfree[index].reshape(num_particles,1)
     y_dash = 10.0*xfree[index].reshape(num_particles,1)
@@ -100,6 +109,9 @@ def init_particles_freespace(num_particles, occupancy_map):
     
     x_map = y_dash
     y_map = x_dash
+    
+    x_map = np.array([4000]).reshape(1,1)
+    y_map = np.array([4000]).reshape(1,1)
     
     X_bar_init = np.hstack((x_map, y_map, theta0_vals, w0_vals))
     
@@ -215,6 +227,7 @@ def monte_carlo(mpargs):
         if(currentposex - posex != 0 or currentposey - posey != 0):
             move = True
             X_bar = resampler.low_variance_sampler(X_bar)
+            # X_bar = resampler.multinomial_sampler(X_bar)
 
         if move == True:
             posex = odometry_robot[0]
@@ -247,7 +260,7 @@ if __name__ == '__main__':
     parser.add_argument('--path_to_map', default='../data/map/wean.dat')
     parser.add_argument('--path_to_log', default='../data/log/robotdata1.log')
     parser.add_argument('--output', default='results')
-    parser.add_argument('--num_particles', default=25, type=int)
+    parser.add_argument('--num_particles', default=1, type=int)
     parser.add_argument('--visualize', action='store_true')
     args = parser.parse_args()
 

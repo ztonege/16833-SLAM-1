@@ -21,8 +21,8 @@ class MotionModel:
         """
         self._alpha1 = 0.0001#0.0001
         self._alpha2 = 0.0001#0.0001
-        self._alpha3 = 0.05#0.01
-        self._alpha4 = 0.05 #0.01
+        self._alpha3 = 0.01#0.01
+        self._alpha4 = 0.01 #0.01
 
         
 

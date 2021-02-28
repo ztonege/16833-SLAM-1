@@ -105,8 +105,8 @@ if __name__ == "__main__":
 
     # sampler = Resampling()
     
-    # X_bar = (np.arange(40)).reshape(10,4)
-    # X_bar[9:10, 3] = 500
+    # X_bar = (np.arange(100)).reshape(25,4)
+    # X_bar[9:10, 3] = 500000
     # print(X_bar)
     
     # X_bar_resampled = sampler.low_variance_sampler(X_bar)
