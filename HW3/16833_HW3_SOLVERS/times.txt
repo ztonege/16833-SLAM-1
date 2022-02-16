@@ -1,0 +1,33 @@
+linear (linear data)
+
+Applying default
+default takes 0.06413483619689941s on average
+Applying pinv
+pinv takes 1.5105135440826416s on average
+Applying lu
+lu takes 0.036435842514038086s on average
+Applying qr
+qr takes 0.7149555683135986s on average
+Applying lu_colamd
+lu_colamd takes 0.11306095123291016s on average
+Applying qr_colamd
+qr_colamd takes 0.6914036273956299s on average
+Applying lu_bonus
+lu_bonus takes 1.5111315250396729s on average
+
+linear (linear loop data)
+Applying default
+default takes 0.004173994064331055s on average
+Applying pinv
+pinv takes 0.23392438888549805s on average
+Applying lu
+lu takes 0.03699040412902832s on average
+Applying qr
+qr takes 0.39594388008117676s on average
+Applying lu_colamd
+lu_colamd takes 0.0043032169342041016s on average
+Applying qr_colamd
+qr_colamd takes 0.05258607864379883s on average
+Applying lu_bonus
+lu_bonus takes 0.25739455223083496s on average
+
